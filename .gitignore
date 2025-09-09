@@ -10,6 +10,9 @@ npm-debug.log*
 .env
 .env.*
 
+# Secret key
+generateSecretKey.js
+
 # Build / cache
 dist/
 build/
