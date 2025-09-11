@@ -5,7 +5,11 @@ const knowledgeSchema = new mongoose.Schema(
     title: { type: String, required: true },
     content: { type: String, required: true },
     tags: { type: [String], default: [] },
-    isPublic: { type: Boolean, default: true },
+    isPublic: { type: Boolean, default: false },
+    isApproved: { type: Boolean, default: false },
+    embedding: { type: [Number], default: [] },
+    createdByAdmin: { type: Boolean, default: false },
+    createdByUser: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

@@ -1,8 +1,15 @@
 import Conversation from "../models/Conversations.js";
+import KnowledgeBase from "../models/KnowledgeBase.js";
 import ApiError from "../utils/ApiError.js";
 import validator from "validator";
 
+import { queryLLM } from "../utils/mistralClient.js";
+import { getEmbedding } from "../utils/mistralClient.js";
+import { findRelevantDocs } from "../services/ragService.js";
+
+// sanitize user input
 const sanitizeMessage = (text) => validator.escape(text.trim());
+const sanitizeTitle = (text) => validator.escape(text.trim().substring(0, 100));
 
 /* ---------------------- User Functions ---------------------- */
 
@@ -11,23 +18,57 @@ const sanitizeMessage = (text) => validator.escape(text.trim());
 // @access Private (user)
 export const createConversation = async (req, res, next) => {
   try {
-    const { messages = [] } = req.body;
+    let { messages = [] } = req.body;
+
     if (!Array.isArray(messages)) {
-      return next(new ApiError(400, "Messages must be an array"));
+      if (typeof messages === "string") messages = [{ content: messages }];
+      else
+        return next(new ApiError(400, "Messages must be an array or string"));
     }
 
-    const sanitizedMessages = messages.map((msg) => ({
-      role: msg.role === "ai" ? "ai" : "user",
-      content: sanitizeMessage(msg.content || ""),
-    }));
+    const conversationMessages = [];
+
+    for (const msg of messages) {
+      const userContent = sanitizeMessage(msg.content || "");
+      conversationMessages.push({ role: "user", content: userContent });
+
+      const docs = await findRelevantDocs(userContent, 5);
+      const contextText = docs
+        .map(
+          (d, i) =>
+            `Knowledge ${i + 1}:\nTitle: ${d.title}\nContent: ${d.content}`
+        )
+        .join("\n\n");
+
+      const prompt = `You are an AI assistant. Use the following knowledge to answer clearly:\n${contextText}\nUser Question: ${userContent}\nAnswer:`;
+
+      const aiContent = await queryLLM(prompt);
+      conversationMessages.push({ role: "ai", content: aiContent });
+
+      await KnowledgeBase.create({
+        title: sanitizeTitle(userContent),
+        content: aiContent,
+        isPublic: false,
+        tags: [],
+        embedding: await getEmbedding(aiContent),
+      });
+    }
 
     const conversation = await Conversation.create({
       userId: req.user._id,
-      messages: sanitizedMessages,
+      messages: conversationMessages,
     });
 
     await conversation.populate("userId", "username email");
-    res.status(201).json(conversation);
+
+    res.status(201).json({
+      status: "success",
+      data: {
+        conversationId: conversation._id,
+        messages: conversation.messages,
+      },
+      message: "Conversation created successfully",
+    });
   } catch (error) {
     next(error);
   }
@@ -39,32 +80,43 @@ export const createConversation = async (req, res, next) => {
 export const sendMessage = async (req, res, next) => {
   try {
     const { content } = req.body;
-    if (!content || !content.trim()) {
-      return next(new ApiError(400, "Message content cannot be empty"));
-    }
+    const conversationId = req.params.id;
 
-    const conversation = await Conversation.findById(req.params.id).populate(
-      "userId",
-      "username email"
-    );
+    const conversation = await Conversation.findById(conversationId);
     if (!conversation) return next(new ApiError(404, "Conversation not found"));
 
-    if (
-      conversation.userId._id.toString() !== req.user._id.toString() &&
-      req.user.role !== "admin"
-    ) {
-      return next(new ApiError(403, "Forbidden"));
+    const userContent = sanitizeMessage(content);
+    conversation.messages.push({ role: "user", content: userContent });
+    await conversation.save();
+
+    const relevantDocs = await findRelevantDocs(userContent, 3);
+    let context = "";
+    if (relevantDocs.length > 0) {
+      context =
+        "\nHere is some relevant knowledge:\n" +
+        relevantDocs.map((d) => `- ${d.content}`).join("\n");
     }
 
-    const sanitizedContent = sanitizeMessage(content);
-    conversation.messages.push({ role: "user", content: sanitizedContent });
+    const prompt = `User asked: "${userContent}"\n${context}\nAnswer in a helpful way.`;
+    const aiResponse = await queryLLM(prompt);
 
-    // AI response placeholder
-    const aiResponse = sanitizeMessage(`AI response for: ${sanitizedContent}`);
     conversation.messages.push({ role: "ai", content: aiResponse });
-
     await conversation.save();
-    res.status(200).json(conversation.messages);
+
+    const embedding = await getEmbedding(userContent);
+    await KnowledgeBase.create({
+      title: sanitizeTitle(userContent),
+      content: aiResponse,
+      tags: ["auto"],
+      isApproved: false,
+      embedding,
+    });
+
+    res.status(200).json({
+      status: "success",
+      data: { response: aiResponse },
+      message: "Message sent successfully",
+    });
   } catch (error) {
     next(error);
   }
@@ -84,16 +136,17 @@ export const getConversationById = async (req, res, next) => {
     if (
       conversation.userId._id.toString() !== req.user._id.toString() &&
       req.user.role !== "admin"
-    ) {
+    )
       return next(new ApiError(403, "Forbidden"));
-    }
 
-    const response = {
-      ...conversation.toObject(),
-      messageCount: conversation.messages.length,
-    };
-
-    res.status(200).json(response);
+    res.status(200).json({
+      status: "success",
+      data: {
+        ...conversation.toObject(),
+        messageCount: conversation.messages.length,
+      },
+      message: "Conversation retrieved successfully",
+    });
   } catch (error) {
     next(error);
   }
@@ -124,9 +177,16 @@ export const getUserConversations = async (req, res, next) => {
       messageCount: conv.messages.length,
     }));
 
-    res
-      .status(200)
-      .json({ page, limit, total, conversations: conversationsWithCount });
+    res.status(200).json({
+      status: "success",
+      data: {
+        page,
+        limit,
+        total,
+        conversations: conversationsWithCount,
+      },
+      message: "User conversations retrieved successfully",
+    });
   } catch (error) {
     next(error);
   }
@@ -140,12 +200,14 @@ export const deleteConversation = async (req, res, next) => {
     const conversation = await Conversation.findById(req.params.id);
     if (!conversation) return next(new ApiError(404, "Conversation not found"));
 
-    if (conversation.userId.toString() !== req.user._id.toString()) {
+    if (conversation.userId.toString() !== req.user._id.toString())
       return next(new ApiError(403, "Forbidden"));
-    }
 
-    await conversation.remove();
-    res.status(200).json({ message: "Conversation deleted successfully" });
+    await conversation.deleteOne();
+    res.status(200).json({
+      status: "success",
+      message: "Conversation deleted successfully",
+    });
   } catch (error) {
     next(error);
   }
@@ -158,16 +220,18 @@ export const deleteConversation = async (req, res, next) => {
 // @access Private (admin)
 export const getAllConversations = async (req, res, next) => {
   try {
-    if (req.user.role !== "admin") {
-      return next(new ApiError(403, "Forbidden"));
-    }
+    if (req.user.role !== "admin") return next(new ApiError(403, "Forbidden"));
 
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
     const skip = (page - 1) * limit;
+    const { search = "" } = req.query;
 
-    const total = await Conversation.countDocuments();
-    const conversations = await Conversation.find()
+    let query = {};
+    if (search) query["messages.content"] = { $regex: search, $options: "i" };
+
+    const total = await Conversation.countDocuments(query);
+    const conversations = await Conversation.find(query)
       .populate("userId", "username email")
       .sort({ startedAt: -1 })
       .skip(skip)
@@ -178,9 +242,16 @@ export const getAllConversations = async (req, res, next) => {
       messageCount: conv.messages.length,
     }));
 
-    res
-      .status(200)
-      .json({ page, limit, total, conversations: conversationsWithCount });
+    res.status(200).json({
+      status: "success",
+      data: {
+        page,
+        limit,
+        total,
+        conversations: conversationsWithCount,
+      },
+      message: "All conversations retrieved successfully",
+    });
   } catch (error) {
     next(error);
   }

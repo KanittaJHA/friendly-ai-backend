@@ -2,21 +2,36 @@
 node_modules/
 
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # Environment variables
 .env
 .env.*
+!.env.example   # keep example file if you want to share format
 
-# Secret key
+# Tests
+tests/
+tests/manual/
+tests/*.test.js
+
+# Secret keys or private scripts
 generateSecretKey.js
 
 # Build / cache
 dist/
 build/
-.cache
+.cache/
+.next/          # for Next.js
+out/            # Next.js export
+coverage/       # test coverage
 
 # TypeScript
 *.tsbuildinfo
+
+# Misc
+.DS_Store
+Thumbs.db

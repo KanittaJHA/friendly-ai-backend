@@ -13,5 +13,7 @@ const conversationSchema = new mongoose.Schema({
   messages: [messageSchema],
 });
 
+conversationSchema.index({ userId: 1 });
+
 export default mongoose.models.Conversation ||
   mongoose.model("Conversation", conversationSchema);

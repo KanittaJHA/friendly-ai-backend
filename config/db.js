@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import KnowledgeBase from "../models/KnowledgeBase.js";
+import { MONGO_URL } from "./config.js";
 
 const fixKnowledgeBaseIndexes = async () => {
   try {
@@ -18,7 +19,7 @@ const fixKnowledgeBaseIndexes = async () => {
 
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URL, {});
+    await mongoose.connect(MONGO_URL, {});
     console.log("MongoDB Connected");
 
     await fixKnowledgeBaseIndexes();
