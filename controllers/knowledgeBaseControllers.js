@@ -1,20 +1,14 @@
-// File: controllers/knowledgeBaseControllers.js
-
 import KnowledgeBase from "../models/KnowledgeBase.js";
 import ApiError from "../utils/ApiError.js";
 import validator from "validator";
 import { getEmbedding } from "../utils/mistralClient.js";
 
-/**
- * Sanitize & validate input
- */
+// Sanitize & validate input
 const sanitizeAndValidate = (text, fieldName) => {
   if (!text || !text.trim())
     throw new ApiError(400, `${fieldName} is required`);
   return validator.escape(text.trim());
 };
-
-/* ---------------------- Admin Functions ---------------------- */
 
 // @desc Add new knowledge (Admin)
 // @route POST /friendly-api/v1/knowledgebase
@@ -23,7 +17,6 @@ export const addKnowledge = async (req, res, next) => {
   try {
     let { title, content, tags = [] } = req.body;
 
-    // sanitize + validate
     title = sanitizeAndValidate(title, "Title");
     content = sanitizeAndValidate(content, "Content");
     tags = Array.isArray(tags) ? tags.map((t) => validator.escape(t)) : [];
@@ -62,7 +55,6 @@ export const getKnowledge = async (req, res, next) => {
 
     let query = {};
 
-    // user sees only approved + public
     if (req.user.role === "user") {
       query.isPublic = true;
       query.isApproved = true;
@@ -85,6 +77,8 @@ export const getKnowledge = async (req, res, next) => {
       content: 1,
       tags: 1,
       createdAt: 1,
+      isApproved: 1,
+      isPublic: 1,
     })
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -113,7 +107,6 @@ export const updateKnowledge = async (req, res, next) => {
     const knowledge = await KnowledgeBase.findById(req.params.id);
     if (!knowledge) return next(new ApiError(404, "Knowledge not found"));
 
-    // sanitize input
     if (title) knowledge.title = sanitizeAndValidate(title, "Title");
     if (content) {
       knowledge.content = sanitizeAndValidate(content, "Content");

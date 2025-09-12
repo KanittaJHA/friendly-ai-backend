@@ -11,7 +11,6 @@ const cache = new Map();
 
 /* ---------------------- Query LLM ---------------------- */
 export const queryLLM = async (prompt, retries = 2) => {
-  // check cache
   if (cache.has(prompt)) {
     return cache.get(prompt);
   }
@@ -33,7 +32,6 @@ export const queryLLM = async (prompt, retries = 2) => {
 
     const clean = cleanAIResponse(res.data.choices[0].message.content);
 
-    // save to cache
     cache.set(prompt, clean);
 
     return clean;

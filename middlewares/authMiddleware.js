@@ -3,8 +3,6 @@ import User from "../models/Users.js";
 import ApiError from "../utils/ApiError.js";
 import { JWT_SECRET } from "../config/config.js";
 
-/* ---------------------- Protect Middleware ---------------------- */
-// export const protect = async (req, res, next) => {
 //   let token;
 
 //   try {
@@ -60,17 +58,14 @@ export const protect = async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
-    if (error.name === "TokenExpiredError") {
+    if (error.name === "TokenExpiredError")
       return next(new ApiError(401, "Token expired"));
-    } else if (error.name === "JsonWebTokenError") {
+    if (error.name === "JsonWebTokenError")
       return next(new ApiError(401, "Invalid token"));
-    } else {
-      return next(new ApiError(500, `Server error: ${error.message}`));
-    }
+    return next(new ApiError(500, `Server error: ${error.message}`));
   }
 };
 
-/* ---------------------- Admin Only Middleware ---------------------- */
 export const adminOnly = (req, res, next) => {
   if (req.user && req.user.role === "admin") {
     next();

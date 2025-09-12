@@ -4,34 +4,6 @@ import ApiError from "../utils/ApiError.js";
 //  @desc Get all users (admin only)
 //  @route GET /friendly-api/v1/users
 //  @access Private (admin)
-// export const getAllUsers = async (req, res, next) => {
-//   try {
-//     const { page = 1, limit = 20, search = "" } = req.query;
-
-//     const query = search
-//       ? {
-//           $or: [
-//             { username: { $regex: search, $options: "i" } },
-//             { email: { $regex: search, $options: "i" } },
-//           ],
-//         }
-//       : {};
-
-//     const users = await User.find(query)
-//       .select("-password")
-//       .skip((page - 1) * limit)
-//       .limit(Number(limit))
-//       .sort({ createdAt: -1 });
-
-//     const total = await User.countDocuments(query);
-
-//     res
-//       .status(200)
-//       .json({ page: Number(page), limit: Number(limit), total, users });
-//   } catch (error) {
-//     next(error);
-//   }
-// };
 export const getAllUsers = async (req, res, next) => {
   try {
     const { page = 1, limit = 20, search = "" } = req.query;

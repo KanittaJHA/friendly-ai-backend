@@ -5,11 +5,12 @@ import {
   logoutUser,
 } from "../controllers/authController.js";
 import { protect } from "../middlewares/authMiddleware.js";
+import { verifyCsrf } from "../middlewares/csrfMiddleware.js";
 
 const router = Router();
 
 router.post("/register", registerUser);
 router.post("/login", loginUser);
-router.post("/logout", protect, logoutUser);
+router.post("/logout", protect, verifyCsrf, logoutUser);
 
 export default router;
