@@ -153,3 +153,19 @@ export const logoutUser = async (req, res, next) => {
     next(error);
   }
 };
+
+// @desc    Get current logged-in user info
+// @route   GET /friendly-api/v1/auth/me
+// @access  Private (any logged-in user)
+export const getMe = async (req, res, next) => {
+  try {
+    if (!req.user) return next(new ApiError(401, "Not authorized"));
+
+    res.status(200).json({
+      success: true,
+      data: req.user,
+    });
+  } catch (error) {
+    next(new ApiError(500, error.message));
+  }
+};

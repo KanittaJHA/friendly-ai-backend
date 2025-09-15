@@ -240,7 +240,7 @@ export const deleteConversation = async (req, res, next) => {
 };
 
 // @desc Get all conversations (admin only, paginated)
-// @route GET /friendly-api/v1/admin/conversations
+// @route GET /friendly-api/v1/conversations/admin/all
 // @access Private (admin)
 export const getAllConversations = async (req, res, next) => {
   try {
