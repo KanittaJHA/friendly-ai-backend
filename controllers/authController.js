@@ -62,7 +62,7 @@ export const registerUser = async (req, res, next) => {
     res.cookie("csrfToken", csrfToken, {
       httpOnly: false,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      sameSite: "None",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -108,7 +108,7 @@ export const loginUser = async (req, res, next) => {
     res.cookie("csrfToken", csrfToken, {
       httpOnly: false,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      sameSite: "None",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -137,13 +137,13 @@ export const logoutUser = async (req, res, next) => {
     res.clearCookie("token", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      sameSite: "None",
     });
 
     res.clearCookie("csrfToken", {
       httpOnly: false,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      sameSite: "None",
     });
 
     res.status(200).json({ status: "success", message: "Logout successful" });
