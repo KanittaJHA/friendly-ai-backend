@@ -1,6 +1,6 @@
 import axios from "axios";
 import { cleanAIResponse } from "./aiHelpers.js";
-import { MISTRAL_API_KEY } from "../config/config.js";
+import { MISTRAL_API_KEY, NODE_ENV } from "../config/config.js";
 
 const BASE_URL = "https://api.mistral.ai/v1";
 
@@ -30,7 +30,10 @@ export const queryLLM = async (prompt, retries = 2) => {
         timeout: 60000,
       }
     );
-    console.log("Mistral response:", res.data);
+
+    if (NODE_ENV !== "production") {
+      console.log("Mistral response:", res.data);
+    }
 
     const clean = cleanAIResponse(res.data.choices[0].message.content);
 

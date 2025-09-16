@@ -10,9 +10,15 @@ import { CLIENT_URL, PORT } from "./config/config.js";
 
 const app = express();
 
+const allowedOrigins = [CLIENT_URL, "http://localhost:5173"];
+
 app.use(
   cors({
-    origin: [CLIENT_URL, "http://localhost:5173"],
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization", "x-csrf-token"],
