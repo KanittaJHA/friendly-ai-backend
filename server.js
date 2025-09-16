@@ -2,7 +2,6 @@ import express from "express";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
 import cookieParser from "cookie-parser";
-
 import connectDB from "./config/db.js";
 import errorHandler from "./middlewares/errorHandler.js";
 import apiRouter from "./routes/apiRouter.js";

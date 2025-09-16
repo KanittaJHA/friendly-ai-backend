@@ -27,8 +27,10 @@ export const queryLLM = async (prompt, retries = 2) => {
           Authorization: `Bearer ${MISTRAL_API_KEY}`,
           "Content-Type": "application/json",
         },
+        timeout: 60000,
       }
     );
+    console.log("Mistral response:", res.data);
 
     const clean = cleanAIResponse(res.data.choices[0].message.content);
 

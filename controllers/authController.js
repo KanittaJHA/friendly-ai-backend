@@ -1,12 +1,30 @@
 import User from "../models/Users.js";
 import bcrypt from "bcryptjs";
 import validator from "validator";
-import { generateToken, setTokenCookie } from "../utils/jwt.js";
+import { generateToken } from "../utils/jwt.js";
 import ApiError from "../utils/ApiError.js";
 import { ADMIN_INVITE_TOKEN } from "../config/config.js";
 import { generateCsrfToken } from "../utils/generateSecretKey.js";
 
 const sanitizeUsername = (username) => validator.escape(username.trim());
+
+const setCookies = (res, token, csrfToken) => {
+  const isProd = process.env.NODE_ENV === "production";
+
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? "None" : "Lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+
+  res.cookie("csrfToken", csrfToken, {
+    httpOnly: false,
+    secure: isProd,
+    sameSite: isProd ? "None" : "Lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+};
 
 // @desc Register a new user
 // @route POST /friendly-api/v1/auth/register
@@ -56,15 +74,9 @@ export const registerUser = async (req, res, next) => {
     });
 
     const token = generateToken(user._id, user.role);
-    setTokenCookie(res, token);
-
     const csrfToken = generateCsrfToken();
-    res.cookie("csrfToken", csrfToken, {
-      httpOnly: false,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "None",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+
+    setCookies(res, token, csrfToken);
 
     res.status(201).json({
       status: "success",
@@ -74,7 +86,6 @@ export const registerUser = async (req, res, next) => {
         email: user.email,
         role: user.role,
         csrfToken,
-        ...(process.env.NODE_ENV !== "production" && { token }),
       },
       message: "User registered successfully",
     });
@@ -102,15 +113,9 @@ export const loginUser = async (req, res, next) => {
     if (!isMatch) return next(new ApiError(401, "Invalid email or password"));
 
     const token = generateToken(user._id, user.role);
-    setTokenCookie(res, token);
-
     const csrfToken = generateCsrfToken();
-    res.cookie("csrfToken", csrfToken, {
-      httpOnly: false,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "None",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+
+    setCookies(res, token, csrfToken);
 
     res.status(200).json({
       status: "success",
@@ -120,7 +125,6 @@ export const loginUser = async (req, res, next) => {
         email: user.email,
         role: user.role,
         csrfToken,
-        ...(process.env.NODE_ENV !== "production" && { token }),
       },
       message: "Login successful",
     });
@@ -134,16 +138,18 @@ export const loginUser = async (req, res, next) => {
 // @access Private
 export const logoutUser = async (req, res, next) => {
   try {
+    const isProd = process.env.NODE_ENV === "production";
+
     res.clearCookie("token", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "None",
+      secure: isProd,
+      sameSite: isProd ? "None" : "Lax",
     });
 
     res.clearCookie("csrfToken", {
       httpOnly: false,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "None",
+      secure: isProd,
+      sameSite: isProd ? "None" : "Lax",
     });
 
     res.status(200).json({ status: "success", message: "Logout successful" });
