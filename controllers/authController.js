@@ -3,13 +3,13 @@ import bcrypt from "bcryptjs";
 import validator from "validator";
 import { generateToken } from "../utils/jwt.js";
 import ApiError from "../utils/ApiError.js";
-import { ADMIN_INVITE_TOKEN } from "../config/config.js";
+import { ADMIN_INVITE_TOKEN, NODE_ENV } from "../config/config.js";
 import { generateCsrfToken } from "../utils/generateSecretKey.js";
 
 const sanitizeUsername = (username) => validator.escape(username.trim());
 
 const setCookies = (res, token, csrfToken) => {
-  const isProd = process.env.NODE_ENV === "production";
+  const isProd = NODE_ENV === "production";
 
   res.cookie("token", token, {
     httpOnly: true,
