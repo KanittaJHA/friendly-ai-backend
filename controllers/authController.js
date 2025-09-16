@@ -1,7 +1,6 @@
 import User from "../models/Users.js";
 import bcrypt from "bcryptjs";
 import validator from "validator";
-import crypto from "crypto";
 import { generateToken, setTokenCookie } from "../utils/jwt.js";
 import ApiError from "../utils/ApiError.js";
 import { ADMIN_INVITE_TOKEN } from "../config/config.js";

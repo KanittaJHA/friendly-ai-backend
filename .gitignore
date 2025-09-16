@@ -18,9 +18,6 @@ tests/
 tests/manual/
 tests/*.test.js
 
-# Secret keys or private scripts
-generateSecretKey.js
-
 # Build / cache
 dist/
 build/
