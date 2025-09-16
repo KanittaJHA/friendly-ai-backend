@@ -7,7 +7,6 @@ import ApiError from "../utils/ApiError.js";
 import { ADMIN_INVITE_TOKEN } from "../config/config.js";
 import { generateCsrfToken } from "../utils/generateSecretKey.js";
 
-// sanitize username
 const sanitizeUsername = (username) => validator.escape(username.trim());
 
 // @desc Register a new user

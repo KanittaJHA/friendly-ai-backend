@@ -3,7 +3,6 @@ import ApiError from "../utils/ApiError.js";
 import validator from "validator";
 import { getEmbedding } from "../utils/mistralClient.js";
 
-// Sanitize & validate input
 const sanitizeAndValidate = (text, fieldName) => {
   if (!text || !text.trim())
     throw new ApiError(400, `${fieldName} is required`);
@@ -96,39 +95,6 @@ export const getKnowledge = async (req, res, next) => {
     next(error);
   }
 };
-
-// @desc Update knowledge by ID (Admin)
-// @route PUT /friendly-api/v1/knowledgebase/:id
-// @access Private (admin)
-// export const updateKnowledge = async (req, res, next) => {
-//   try {
-//     const { title, content, tags, isPublic } = req.body;
-
-//     const knowledge = await KnowledgeBase.findById(req.params.id);
-//     if (!knowledge) return next(new ApiError(404, "Knowledge not found"));
-
-//     if (title) knowledge.title = sanitizeAndValidate(title, "Title");
-//     if (content) {
-//       knowledge.content = sanitizeAndValidate(content, "Content");
-//       knowledge.embedding = await getEmbedding(knowledge.content);
-//     }
-//     if (tags)
-//       knowledge.tags = Array.isArray(tags)
-//         ? tags.map((t) => validator.escape(t))
-//         : [];
-//     if (typeof isPublic === "boolean") knowledge.isPublic = isPublic;
-
-//     await knowledge.save();
-
-//     res.status(200).json({
-//       status: "success",
-//       data: knowledge,
-//       message: "Knowledge updated successfully",
-//     });
-//   } catch (error) {
-//     next(error);
-//   }
-// };
 
 // @desc Update knowledge by ID (Admin)
 // @route PUT /friendly-api/v1/knowledgebase/:id

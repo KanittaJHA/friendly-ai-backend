@@ -7,7 +7,6 @@ import { queryLLM } from "../utils/mistralClient.js";
 import { getEmbedding } from "../utils/mistralClient.js";
 import { findRelevantDocs } from "../services/ragService.js";
 
-// sanitize user input
 const sanitizeMessage = (text) => validator.escape(text.trim());
 const sanitizeTitle = (text) => validator.escape(text.trim().substring(0, 100));
 
