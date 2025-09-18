@@ -12,13 +12,9 @@ const app = express();
 
 const allowedOrigins = [CLIENT_URL, "http://localhost:5173"];
 
-console.log("CLIENT_URL:", CLIENT_URL);
-console.log("Allowed Origins:", allowedOrigins);
-
 app.use(
   cors({
     origin: (origin, callback) => {
-      console.log("Incoming origin:", origin);
       if (!origin) return callback(null, true);
       if (allowedOrigins.includes(origin)) return callback(null, true);
       callback(new Error("Not allowed by CORS"));
