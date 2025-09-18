@@ -8,13 +8,13 @@ import {
   sendMessage,
 } from "../controllers/conversationsController.js";
 import { protect, adminOnly } from "../middlewares/authMiddleware.js";
-import { verifyCsrf } from "../middlewares/csrfMiddleware.js";
+// import { verifyCsrf } from "../middlewares/csrfMiddleware.js";
 
 const router = Router();
 
-router.post("/", protect, verifyCsrf, createConversation);
-router.post("/:id/messages", protect, verifyCsrf, sendMessage);
-router.delete("/:id", protect, verifyCsrf, deleteConversation);
+router.post("/", protect, createConversation);
+router.post("/:id/messages", protect, sendMessage);
+router.delete("/:id", protect, deleteConversation);
 
 router.get("/:id", protect, getConversationById);
 router.get("/", protect, getUserConversations);
