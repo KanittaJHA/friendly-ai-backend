@@ -47,55 +47,6 @@ export const addKnowledge = async (req, res, next) => {
 // @desc Get all knowledge with optional search & pagination
 // @route GET /friendly-api/v1/knowledgebase
 // @access Private (user/admin)
-// export const getKnowledge = async (req, res, next) => {
-//   try {
-//     const { search = "", page = 1, limit = 20 } = req.query;
-//     const skip = (page - 1) * limit;
-
-//     let query = {};
-
-//     if (req.user.role === "user") {
-//       query.isPublic = true;
-//       query.isApproved = true;
-//     }
-
-//     if (search) {
-//       if (req.user.role === "admin") {
-//         query.$or = [
-//           { title: { $regex: search, $options: "i" } },
-//           { content: { $regex: search, $options: "i" } },
-//         ];
-//       } else {
-//         query.$text = { $search: search };
-//       }
-//     }
-
-//     const total = await KnowledgeBase.countDocuments(query);
-//     const knowledgeList = await KnowledgeBase.find(query, {
-//       title: 1,
-//       content: 1,
-//       tags: 1,
-//       createdAt: 1,
-//       isApproved: 1,
-//       isPublic: 1,
-//     })
-//       .sort({ createdAt: -1 })
-//       .skip(skip)
-//       .limit(Number(limit));
-
-//     res.status(200).json({
-//       status: "success",
-//       page: Number(page),
-//       limit: Number(limit),
-//       total,
-//       totalPages: Math.ceil(total / limit),
-//       data: knowledgeList,
-//     });
-//   } catch (error) {
-//     next(error);
-//   }
-// };
-// @desc Get all knowledge with optional search & pagination
 export const getKnowledge = async (req, res, next) => {
   try {
     const { search = "", page = 1, limit = 20 } = req.query;
@@ -103,13 +54,11 @@ export const getKnowledge = async (req, res, next) => {
 
     let query = {};
 
-    // สำหรับ user กรองเฉพาะ public + approved
     if (req.user.role === "user") {
       query.isPublic = true;
       query.isApproved = true;
     }
 
-    // search สำหรับทุกคน
     if (search) {
       query.$or = [
         { title: { $regex: search, $options: "i" } },
