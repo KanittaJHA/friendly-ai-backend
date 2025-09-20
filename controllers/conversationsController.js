@@ -171,6 +171,12 @@ export const getUserConversations = async (req, res, next) => {
 
       total = await Conversation.countDocuments(query);
 
+      if (total === 0) {
+        return next(
+          new ApiError(404, "No conversations found matching search criteria")
+        );
+      }
+
       conversations = await Conversation.find(query)
         .populate("userId", "username email")
         .sort({ startedAt: -1 })
@@ -189,6 +195,10 @@ export const getUserConversations = async (req, res, next) => {
       });
     } else {
       total = await Conversation.countDocuments(query);
+
+      if (total === 0) {
+        return next(new ApiError(404, "No conversations found for this user"));
+      }
 
       conversations = await Conversation.find(query)
         .populate("userId", "username email")
